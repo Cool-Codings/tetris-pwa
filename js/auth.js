@@ -103,6 +103,12 @@ class TetrisAuth {
 
         const hash = this.generateHash(password);
 
+        // Debug logging
+        console.log('Input:', password);
+        console.log('Generated hash:', hash);
+        console.log('Expected hash:', this.expectedHash);
+        console.log('Match:', hash === this.expectedHash);
+
         if (this.verifyHash(hash)) {
             // Passwort korrekt
             if (this.rememberCheckbox.checked) {
