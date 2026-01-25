@@ -1,0 +1,488 @@
+/* ===========================================
+   TETRIS PWA - Stylesheet
+   =========================================== */
+
+/* CSS Variables */
+:root {
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-tertiary: #0f3460;
+    --accent-cyan: #00f5ff;
+    --accent-pink: #ff6b6b;
+    --accent-yellow: #ffd93d;
+    --accent-green: #6bcb77;
+    --accent-purple: #9b59b6;
+    --accent-orange: #ff9f43;
+    --text-primary: #ffffff;
+    --text-secondary: #b8b8b8;
+    --shadow-glow: 0 0 20px rgba(0, 245, 255, 0.3);
+    --border-radius: 12px;
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+}
+
+/* Reset & Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+    touch-action: manipulation;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-tertiary) 100%);
+    color: var(--text-primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Game Container */
+#game-container {
+    width: 100%;
+    max-width: 500px;
+    height: 100%;
+    max-height: 900px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    padding: 10px;
+    padding-top: env(safe-area-inset-top, 10px);
+    padding-bottom: env(safe-area-inset-bottom, 10px);
+}
+
+/* Screens */
+.screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.screen.active {
+    display: flex;
+}
+
+.screen.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(5px);
+    z-index: 100;
+}
+
+.overlay-content {
+    text-align: center;
+    padding: 30px;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    border: 2px solid var(--accent-cyan);
+    box-shadow: var(--shadow-glow);
+}
+
+/* Title */
+.game-title {
+    font-size: 4rem;
+    font-weight: 900;
+    letter-spacing: 8px;
+    margin-bottom: 30px;
+    text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+}
+
+.letter {
+    display: inline-block;
+    animation: bounce 0.6s ease infinite;
+    text-shadow:
+        0 0 10px currentColor,
+        0 0 20px currentColor,
+        0 0 30px currentColor;
+}
+
+.letter:nth-child(1) { animation-delay: 0s; }
+.letter:nth-child(2) { animation-delay: 0.1s; }
+.letter:nth-child(3) { animation-delay: 0.2s; }
+.letter:nth-child(4) { animation-delay: 0.3s; }
+.letter:nth-child(5) { animation-delay: 0.4s; }
+.letter:nth-child(6) { animation-delay: 0.5s; }
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Highscore Display */
+.highscore-display {
+    font-size: 1.3rem;
+    color: var(--accent-yellow);
+    margin-bottom: 30px;
+    padding: 10px 25px;
+    background: rgba(255, 217, 61, 0.1);
+    border-radius: 25px;
+    border: 1px solid var(--accent-yellow);
+}
+
+/* Buttons */
+.game-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px 40px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--bg-primary);
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    margin: 8px 0;
+    min-width: 200px;
+    box-shadow: 0 4px 15px rgba(0, 245, 255, 0.4);
+}
+
+.game-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 25px rgba(0, 245, 255, 0.6);
+}
+
+.game-button:active {
+    transform: scale(0.98);
+}
+
+.game-button.secondary {
+    background: transparent;
+    color: var(--text-primary);
+    border: 2px solid var(--accent-cyan);
+    box-shadow: none;
+}
+
+.game-button.secondary:hover {
+    background: rgba(0, 245, 255, 0.1);
+    box-shadow: 0 0 20px rgba(0, 245, 255, 0.3);
+}
+
+.game-button.small {
+    padding: 10px 20px;
+    font-size: 1rem;
+    min-width: auto;
+}
+
+/* Controls Info */
+.controls-info {
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--border-radius);
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.controls-info p {
+    margin: 5px 0;
+}
+
+/* Game Screen */
+#game-screen {
+    justify-content: flex-start;
+    gap: 10px;
+}
+
+/* Game Header */
+#game-header {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    padding: 10px;
+    gap: 10px;
+}
+
+.stat-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 15px;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    border: 1px solid rgba(0, 245, 255, 0.3);
+    min-width: 80px;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-cyan);
+    text-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
+}
+
+/* Game Area */
+#game-area {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 15px;
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+}
+
+#canvas-container {
+    position: relative;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: var(--border-radius);
+    border: 3px solid var(--accent-cyan);
+    box-shadow:
+        var(--shadow-glow),
+        inset 0 0 50px rgba(0, 245, 255, 0.1);
+    overflow: hidden;
+}
+
+#game-canvas, #particle-canvas {
+    display: block;
+}
+
+#particle-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+}
+
+/* Side Panel */
+#side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+.next-piece-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    border: 2px solid rgba(0, 245, 255, 0.3);
+}
+
+.panel-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+#next-canvas {
+    display: block;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+}
+
+/* Touch Controls */
+#touch-controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 15px;
+    width: 100%;
+}
+
+.touch-btn {
+    width: 65px;
+    height: 65px;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--text-primary);
+    background: linear-gradient(145deg, var(--bg-secondary), var(--bg-tertiary));
+    border: 2px solid var(--accent-cyan);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+        0 4px 8px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.touch-btn:active {
+    transform: scale(0.9);
+    background: var(--accent-cyan);
+    color: var(--bg-primary);
+    box-shadow:
+        0 0 20px rgba(0, 245, 255, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Game Over Screen */
+.final-score {
+    display: flex;
+    flex-direction: column;
+    margin: 20px 0;
+}
+
+.big-score {
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--accent-cyan);
+    text-shadow: 0 0 20px rgba(0, 245, 255, 0.7);
+}
+
+#new-highscore {
+    color: var(--accent-yellow);
+    font-size: 1.3rem;
+    font-weight: 600;
+    animation: pulse 0.5s ease infinite alternate;
+    margin-bottom: 15px;
+}
+
+#new-highscore.hidden {
+    display: none;
+}
+
+@keyframes pulse {
+    from { transform: scale(1); opacity: 0.8; }
+    to { transform: scale(1.1); opacity: 1; }
+}
+
+/* Pause Screen */
+#pause-screen h2,
+#gameover-screen h2 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    color: var(--accent-cyan);
+}
+
+/* Responsive Design */
+@media (max-height: 700px) {
+    .game-title {
+        font-size: 3rem;
+        margin-bottom: 20px;
+    }
+
+    .highscore-display {
+        font-size: 1rem;
+        margin-bottom: 20px;
+    }
+
+    .game-button {
+        padding: 12px 30px;
+        font-size: 1rem;
+    }
+
+    .controls-info {
+        margin-top: 15px;
+        padding: 15px;
+    }
+
+    .touch-btn {
+        width: 55px;
+        height: 55px;
+        font-size: 1.5rem;
+    }
+
+    .stat-value {
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .game-title {
+        font-size: 2.5rem;
+        letter-spacing: 4px;
+    }
+
+    .touch-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 1.3rem;
+    }
+
+    #touch-controls {
+        gap: 8px;
+    }
+}
+
+/* Tablet landscape */
+@media (min-width: 768px) and (orientation: landscape) {
+    #game-container {
+        max-width: 800px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+    }
+
+    #game-screen {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    #game-header {
+        width: 100%;
+    }
+
+    #touch-controls {
+        width: auto;
+        flex-direction: column;
+        padding: 10px;
+    }
+}
+
+/* Desktop - hide touch controls */
+@media (hover: hover) and (pointer: fine) {
+    #touch-controls {
+        display: none;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.screen.active {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--accent-cyan);
+    border-radius: 3px;
+}
