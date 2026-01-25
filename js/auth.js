@@ -7,7 +7,7 @@ class TetrisAuth {
     constructor() {
         // Obfuskierter Hash des Passworts (nicht im Klartext)
         // Generiert mit: btoa(password.split('').map((c,i) => String.fromCharCode(c.charCodeAt(0) ^ (i + 42))).join(''))
-        this.expectedHash = 'a3lXQXU=';
+        this.expectedHash = 'a1hPSE8=';
 
         // DOM-Elemente
         this.modal = document.getElementById('password-modal');
