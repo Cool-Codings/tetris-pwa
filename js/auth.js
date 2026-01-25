@@ -5,9 +5,9 @@
 
 class TetrisAuth {
     constructor() {
-        // Obfuskierter Hash des Passworts (nicht im Klartext)
-        // Generiert mit: btoa(password.split('').map((c,i) => String.fromCharCode(c.charCodeAt(0) ^ (i + 42))).join(''))
-        this.expectedHash = 'a1hPSE8=';
+        // Passwort obfuskiert als Char-Codes (nicht im Klartext)
+        // [65, 115, 99, 101, 97] = "Ascea"
+        this._k = [65, 115, 99, 101, 97];
 
         // DOM-Elemente
         this.modal = document.getElementById('password-modal');
@@ -26,9 +26,9 @@ class TetrisAuth {
      * Initialisierung
      */
     init() {
-        // Prüfe ob bereits authentifiziert (gespeichertes Passwort)
+        // Prüfe ob bereits authentifiziert (gespeichertes Token)
         const savedAuth = localStorage.getItem('tetris-auth');
-        if (savedAuth && this.verifyHash(savedAuth)) {
+        if (savedAuth && this.verifyToken(savedAuth)) {
             this.unlock();
             return;
         }
@@ -72,22 +72,34 @@ class TetrisAuth {
     }
 
     /**
-     * Generiert Hash aus Passwort
+     * Dekodiert das gespeicherte Passwort
      */
-    generateHash(password) {
-        // Einfache XOR-Obfuskation + Base64
-        const obfuscated = password
-            .split('')
-            .map((c, i) => String.fromCharCode(c.charCodeAt(0) ^ (i + 42)))
-            .join('');
-        return btoa(obfuscated);
+    _decode() {
+        return String.fromCharCode.apply(null, this._k);
     }
 
     /**
-     * Verifiziert einen Hash
+     * Generiert ein Token für die Speicherung
      */
-    verifyHash(hash) {
-        return hash === this.expectedHash;
+    generateToken(password) {
+        // Einfaches Token basierend auf Passwort-Länge und Prüfsumme
+        let sum = 0;
+        for (let i = 0; i < password.length; i++) {
+            sum += password.charCodeAt(i) * (i + 1);
+        }
+        return btoa(password.length + ':' + sum);
+    }
+
+    /**
+     * Verifiziert ein gespeichertes Token
+     */
+    verifyToken(token) {
+        try {
+            const expected = this.generateToken(this._decode());
+            return token === expected;
+        } catch {
+            return false;
+        }
     }
 
     /**
@@ -101,18 +113,13 @@ class TetrisAuth {
             return;
         }
 
-        const hash = this.generateHash(password);
+        // Direkter Vergleich mit dekodiertem Passwort
+        const correct = this._decode();
 
-        // Debug logging
-        console.log('Input:', password);
-        console.log('Generated hash:', hash);
-        console.log('Expected hash:', this.expectedHash);
-        console.log('Match:', hash === this.expectedHash);
-
-        if (this.verifyHash(hash)) {
+        if (password === correct) {
             // Passwort korrekt
             if (this.rememberCheckbox.checked) {
-                localStorage.setItem('tetris-auth', hash);
+                localStorage.setItem('tetris-auth', this.generateToken(password));
             }
             this.unlock();
         } else {
