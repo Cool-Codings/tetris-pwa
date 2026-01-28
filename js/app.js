@@ -3,6 +3,75 @@
  * Verbindet alle Komponenten und verwaltet den Spielzustand
  */
 
+/**
+ * Typewriter-Effekt für den Titel
+ */
+class TitleTypewriter {
+    constructor(element, names) {
+        this.element = element;
+        this.names = names;
+        this.currentNameIndex = 0;
+        this.currentCharIndex = 0;
+        this.isDeleting = false;
+        this.typeSpeed = 150;
+        this.deleteSpeed = 100;
+        this.pauseAfterType = 2000;
+        this.pauseAfterDelete = 500;
+
+        this.start();
+    }
+
+    start() {
+        this.tick();
+    }
+
+    tick() {
+        const currentName = this.names[this.currentNameIndex];
+
+        if (this.isDeleting) {
+            // Buchstaben löschen
+            this.currentCharIndex--;
+            this.element.textContent = currentName.substring(0, this.currentCharIndex);
+
+            if (this.currentCharIndex === 0) {
+                // Fertig mit Löschen, nächster Name
+                this.isDeleting = false;
+                this.currentNameIndex = (this.currentNameIndex + 1) % this.names.length;
+                setTimeout(() => this.tick(), this.pauseAfterDelete);
+            } else {
+                setTimeout(() => this.tick(), this.deleteSpeed);
+            }
+        } else {
+            // Buchstaben tippen
+            this.currentCharIndex++;
+            this.element.textContent = currentName.substring(0, this.currentCharIndex);
+
+            // Farbe basierend auf Namen ändern
+            this.updateColor();
+
+            if (this.currentCharIndex === currentName.length) {
+                // Fertig mit Tippen, Pause dann löschen
+                this.isDeleting = true;
+                setTimeout(() => this.tick(), this.pauseAfterType);
+            } else {
+                setTimeout(() => this.tick(), this.typeSpeed);
+            }
+        }
+    }
+
+    updateColor() {
+        // Verschiedene Farben für verschiedene Namen
+        const colors = {
+            'Lui': '#00f5ff',    // Cyan
+            'Kiki': '#ff6b6b',   // Pink/Rot
+            'Tuiio': '#6bcb77'   // Grün
+        };
+        const currentName = this.names[this.currentNameIndex];
+        this.element.style.color = colors[currentName] || '#ffd93d';
+        this.element.style.textShadow = `0 0 10px ${colors[currentName]}, 0 0 20px ${colors[currentName]}`;
+    }
+}
+
 class TetrisApp {
     constructor() {
         // DOM-Elemente
@@ -44,6 +113,12 @@ class TetrisApp {
         const soundEnabled = localStorage.getItem('tetris-sound') !== 'false';
         soundManager.enabled = soundEnabled;
         this.updateSoundButton();
+
+        // Typewriter-Effekt für Titel starten
+        const titleNameElement = document.getElementById('title-name');
+        if (titleNameElement) {
+            new TitleTypewriter(titleNameElement, ['Lui', 'Kiki', 'Tuiio']);
+        }
 
         // Event-Listener einrichten
         this.setupEventListeners();
