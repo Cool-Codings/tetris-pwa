@@ -92,16 +92,18 @@ class TetrisGame {
      * Canvas-Größe anpassen
      */
     resizeCanvas() {
-        // Verfügbare Höhe berechnen
-        const container = this.canvas.parentElement;
+        // Verfügbare Höhe berechnen (Game Area Container)
+        const container = this.canvas.parentElement.parentElement;
         const maxHeight = container.clientHeight || 500;
         const maxWidth = container.clientWidth || 300;
 
         // Cell-Size basierend auf verfügbarem Platz berechnen
-        const cellByHeight = Math.floor((maxHeight - 20) / this.rows);
-        const cellByWidth = Math.floor((maxWidth - 20) / this.cols);
-        this.cellSize = Math.min(cellByHeight, cellByWidth, 35);
-        this.cellSize = Math.max(this.cellSize, 20); // Minimum 20px
+        // Größere Zellen erlauben für bessere Sichtbarkeit
+        const cellByHeight = Math.floor((maxHeight - 10) / this.rows);
+        const cellByWidth = Math.floor((maxWidth - 10) / this.cols);
+        this.cellSize = Math.min(cellByHeight, cellByWidth);
+        this.cellSize = Math.max(this.cellSize, 18); // Minimum 18px
+        this.cellSize = Math.min(this.cellSize, 45); // Maximum 45px
 
         // Canvas-Größen setzen
         this.canvas.width = this.cols * this.cellSize;
@@ -110,9 +112,10 @@ class TetrisGame {
         // Partikel-Canvas gleiche Größe
         this.particleSystem.resize(this.canvas.width, this.canvas.height);
 
-        // Next-Piece Canvas
-        this.nextCanvas.width = 4 * this.cellSize;
-        this.nextCanvas.height = 4 * this.cellSize;
+        // Next-Piece Canvas (kleiner, da horizontal neben Label)
+        const nextCellSize = Math.max(15, Math.floor(this.cellSize * 0.6));
+        this.nextCanvas.width = 4 * nextCellSize;
+        this.nextCanvas.height = 2 * nextCellSize;
 
         // Neu zeichnen wenn Spiel läuft
         if (this.isRunning) {
@@ -584,7 +587,8 @@ class TetrisGame {
      */
     drawNextPiece() {
         const ctx = this.nextCtx;
-        const cellSize = this.cellSize;
+        // Cell-Size für Next-Canvas berechnen
+        const nextCellSize = this.nextCanvas.width / 4;
 
         // Canvas löschen
         ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
@@ -593,15 +597,37 @@ class TetrisGame {
         if (!this.nextPiece) return;
 
         const { shape, color } = this.nextPiece;
-        const offsetX = (4 - shape[0].length) / 2;
-        const offsetY = (4 - shape.length) / 2;
+
+        // Zentrieren im Canvas
+        const pieceWidth = shape[0].length * nextCellSize;
+        const pieceHeight = shape.length * nextCellSize;
+        const offsetX = (this.nextCanvas.width - pieceWidth) / 2;
+        const offsetY = (this.nextCanvas.height - pieceHeight) / 2;
 
         for (let row = 0; row < shape.length; row++) {
             for (let col = 0; col < shape[row].length; col++) {
                 if (shape[row][col]) {
-                    this.drawCell(ctx, offsetX + col, offsetY + row, color);
+                    this.drawNextCell(ctx, offsetX + col * nextCellSize, offsetY + row * nextCellSize, nextCellSize, color);
                 }
             }
         }
+    }
+
+    /**
+     * Zelle für Next-Piece zeichnen (mit eigener Größe)
+     */
+    drawNextCell(ctx, x, y, size, color) {
+        const padding = 1;
+        const radius = 3;
+
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = color;
+
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.roundRect(x + padding, y + padding, size - padding * 2, size - padding * 2, radius);
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
     }
 }

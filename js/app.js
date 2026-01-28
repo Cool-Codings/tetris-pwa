@@ -62,13 +62,15 @@ class TitleTypewriter {
     updateColor() {
         // Verschiedene Farben für verschiedene Namen
         const colors = {
-            'Lui': '#00f5ff',    // Cyan
-            'Kiki': '#ff6b6b',   // Pink/Rot
-            'Tuiio': '#6bcb77'   // Grün
+            'Lui': '#00f5ff',           // Cyan
+            'Kiki': '#ff6b6b',          // Pink/Rot
+            'Tulio': '#6bcb77',         // Grün
+            '... und Freunde': '#ffd93d' // Gelb
         };
         const currentName = this.names[this.currentNameIndex];
-        this.element.style.color = colors[currentName] || '#ffd93d';
-        this.element.style.textShadow = `0 0 10px ${colors[currentName]}, 0 0 20px ${colors[currentName]}`;
+        const color = colors[currentName] || '#ffd93d';
+        this.element.style.color = color;
+        this.element.style.textShadow = `0 0 10px ${color}, 0 0 20px ${color}`;
     }
 }
 
@@ -117,7 +119,7 @@ class TetrisApp {
         // Typewriter-Effekt für Titel starten
         const titleNameElement = document.getElementById('title-name');
         if (titleNameElement) {
-            new TitleTypewriter(titleNameElement, ['Lui', 'Kiki', 'Tuiio']);
+            new TitleTypewriter(titleNameElement, ['Lui', 'Kiki', 'Tulio', '... und Freunde']);
         }
 
         // Event-Listener einrichten
