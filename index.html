@@ -72,10 +72,15 @@
                 <span class="title-name" id="title-name"></span>
                 <span class="title-cursor"></span>
             </div>
-            <div class="highscore-display">
-                <span>🏆 Highscore: </span>
-                <span id="highscore-value">0</span>
+
+            <!-- Leaderboard on Start Screen -->
+            <div class="leaderboard-container" id="start-leaderboard">
+                <h3 class="leaderboard-title">🏆 Top 10</h3>
+                <div class="leaderboard-list" id="start-leaderboard-list">
+                    <!-- Wird dynamisch gefüllt -->
+                </div>
             </div>
+
             <button id="start-button" class="game-button">
                 <span>▶ Spiel starten</span>
             </button>
@@ -147,17 +152,41 @@
 
         <!-- Game Over Screen -->
         <div id="gameover-screen" class="screen overlay">
-            <div class="overlay-content">
+            <div class="overlay-content gameover-content">
                 <h2>Game Over!</h2>
                 <div class="final-score">
                     <span>Dein Score:</span>
                     <span id="final-score-value" class="big-score">0</span>
                 </div>
-                <div id="new-highscore" class="hidden">
-                    <span>🎉 Neuer Highscore! 🎉</span>
+
+                <!-- Name Input (nur bei Top 10) -->
+                <div id="name-input-section" class="name-input-section hidden">
+                    <div class="top10-message">🎉 Du bist in den Top 10! 🎉</div>
+                    <div class="name-input-wrapper">
+                        <input
+                            type="text"
+                            id="player-name-input"
+                            class="player-name-input"
+                            placeholder="Dein Name..."
+                            maxlength="10"
+                            autocomplete="off"
+                        >
+                        <button id="save-score-button" class="save-score-btn">Speichern</button>
+                    </div>
                 </div>
-                <button id="play-again-button" class="game-button">🔄 Nochmal spielen</button>
-                <button id="back-to-menu-button" class="game-button secondary">🏠 Zum Menü</button>
+
+                <!-- Leaderboard -->
+                <div class="leaderboard-container" id="gameover-leaderboard">
+                    <h3 class="leaderboard-title">🏆 Top 10</h3>
+                    <div class="leaderboard-list" id="gameover-leaderboard-list">
+                        <!-- Wird dynamisch gefüllt -->
+                    </div>
+                </div>
+
+                <div class="gameover-buttons">
+                    <button id="play-again-button" class="game-button">🔄 Nochmal spielen</button>
+                    <button id="back-to-menu-button" class="game-button secondary">🏠 Zum Menü</button>
+                </div>
             </div>
         </div>
     </div>
