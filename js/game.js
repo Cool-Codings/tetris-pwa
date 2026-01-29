@@ -3,7 +3,7 @@
  * Haupt-Spiellogik für Tetris
  */
 
-// Tetromino-Definitionen
+// Tetromino-Definitionen (klassische 7 Formen)
 const TETROMINOES = {
     I: {
         shape: [[1, 1, 1, 1]],
@@ -35,7 +35,46 @@ const TETROMINOES = {
     }
 };
 
+// Pentomino-Definitionen (8 neue Formen - werden ab Level 2 freigeschaltet)
+const PENTOMINOES = {
+    Plus: {
+        shape: [[0, 1, 0], [1, 1, 1], [0, 1, 0]],
+        color: '#ff69b4'  // Pink
+    },
+    U: {
+        shape: [[1, 0, 1], [1, 1, 1]],
+        color: '#00ced1'  // Türkis
+    },
+    W: {
+        shape: [[1, 0, 0], [1, 1, 0], [0, 1, 1]],
+        color: '#daa520'  // Gold
+    },
+    P: {
+        shape: [[1, 1], [1, 1], [1, 0]],
+        color: '#32cd32'  // Lime
+    },
+    F: {
+        shape: [[0, 1, 1], [1, 1, 0], [0, 1, 0]],
+        color: '#ff1493'  // Deep Pink
+    },
+    Y: {
+        shape: [[0, 1], [1, 1], [0, 1], [0, 1]],
+        color: '#7b68ee'  // Violett
+    },
+    V: {
+        shape: [[1, 0, 0], [1, 0, 0], [1, 1, 1]],
+        color: '#20b2aa'  // Seegrün
+    },
+    X: {
+        shape: [[1, 0, 1], [0, 1, 0], [1, 0, 1]],
+        color: '#ff4500'  // Orange-Rot
+    }
+};
+
+// Klassische Tetrominoes (Level 1)
 const TETROMINO_NAMES = Object.keys(TETROMINOES);
+// Neue Pentominoes (werden ab Level 2 nacheinander freigeschaltet)
+const PENTOMINO_NAMES = Object.keys(PENTOMINOES);
 
 // Punkte-System
 const POINTS = {
@@ -75,7 +114,7 @@ class TetrisGame {
 
         // Timing
         this.lastDrop = 0;
-        this.dropInterval = 1000;
+        this.dropInterval = 800;  // Start bei 800ms
         this.animationId = null;
 
         // Callbacks
@@ -112,10 +151,10 @@ class TetrisGame {
         // Partikel-Canvas gleiche Größe
         this.particleSystem.resize(this.canvas.width, this.canvas.height);
 
-        // Next-Piece Canvas (kleiner, da horizontal neben Label)
-        const nextCellSize = Math.max(15, Math.floor(this.cellSize * 0.6));
+        // Next-Piece Canvas (größer für Pentominoes - bis zu 4 Reihen, 3 Spalten)
+        const nextCellSize = Math.max(12, Math.floor(this.cellSize * 0.5));
         this.nextCanvas.width = 4 * nextCellSize;
-        this.nextCanvas.height = 2 * nextCellSize;
+        this.nextCanvas.height = 4 * nextCellSize;
 
         // Neu zeichnen wenn Spiel läuft
         if (this.isRunning) {
@@ -139,7 +178,7 @@ class TetrisGame {
         this.isRunning = true;
         this.isPaused = false;
         this.isGameOver = false;
-        this.dropInterval = 1000;
+        this.dropInterval = 800;  // Start bei 800ms
         this.lastDrop = performance.now();
 
         // Erste Steine erzeugen
@@ -157,16 +196,41 @@ class TetrisGame {
     }
 
     /**
-     * Erzeugt ein neues Tetromino
+     * Gibt die verfügbaren Formen basierend auf dem Level zurück
+     */
+    getAvailableShapes() {
+        // Level 1: nur klassische Tetrominoes
+        // Ab Level 2: +1 Pentomino pro Level (bis alle 8 freigeschaltet sind)
+        const unlockedPentominoes = Math.min(this.level - 1, PENTOMINO_NAMES.length);
+
+        const available = [];
+
+        // Alle klassischen Tetrominoes hinzufügen
+        TETROMINO_NAMES.forEach(name => {
+            available.push({ name, data: TETROMINOES[name] });
+        });
+
+        // Freigeschaltete Pentominoes hinzufügen
+        for (let i = 0; i < unlockedPentominoes; i++) {
+            const name = PENTOMINO_NAMES[i];
+            available.push({ name, data: PENTOMINOES[name] });
+        }
+
+        return available;
+    }
+
+    /**
+     * Erzeugt ein neues Tetromino/Pentomino
      */
     createPiece() {
-        const name = TETROMINO_NAMES[Math.floor(Math.random() * TETROMINO_NAMES.length)];
-        const tetromino = TETROMINOES[name];
+        const available = this.getAvailableShapes();
+        const selected = available[Math.floor(Math.random() * available.length)];
+        const piece = selected.data;
 
         return {
-            shape: tetromino.shape.map(row => [...row]),
-            color: tetromino.color,
-            x: Math.floor((this.cols - tetromino.shape[0].length) / 2),
+            shape: piece.shape.map(row => [...row]),
+            color: piece.color,
+            x: Math.floor((this.cols - piece.shape[0].length) / 2),
             y: 0
         };
     }
@@ -364,7 +428,8 @@ class TetrisGame {
             const newLevel = Math.floor(this.lines / 10) + 1;
             if (newLevel > this.level) {
                 this.level = newLevel;
-                this.dropInterval = Math.max(100, 1000 - (this.level - 1) * 100);
+                // Geschwindigkeit: 800ms bei Level 1, -100ms pro Level, min 100ms
+                this.dropInterval = Math.max(100, 800 - (this.level - 1) * 100);
                 soundManager.levelUp();
 
                 // Konfetti bei Level-Up
@@ -587,8 +652,8 @@ class TetrisGame {
      */
     drawNextPiece() {
         const ctx = this.nextCtx;
-        // Cell-Size für Next-Canvas berechnen
-        const nextCellSize = this.nextCanvas.width / 4;
+        // Cell-Size für Next-Canvas berechnen (basierend auf größter Dimension)
+        const nextCellSize = Math.min(this.nextCanvas.width, this.nextCanvas.height) / 4;
 
         // Canvas löschen
         ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
