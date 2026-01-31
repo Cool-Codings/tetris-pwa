@@ -230,6 +230,10 @@ class TetrisApp {
         this.announcementText = document.getElementById('announcement-text');
         this.announcementTimeout = null;
 
+        // Joker-Elemente
+        this.jokerPanel = document.getElementById('joker-panel');
+        this.jokerList = document.getElementById('joker-list');
+
         // Spiel initialisieren
         this.game = null;
         this.controls = null;
@@ -451,6 +455,9 @@ class TetrisApp {
     startGame() {
         this.showScreen('game');
 
+        // Joker-Liste leeren
+        this.updateJokerDisplay(0);
+
         this.game = new TetrisGame(
             this.gameCanvas,
             this.nextCanvas,
@@ -469,6 +476,9 @@ class TetrisApp {
             this.game.onLinesUpdate = (lines) => {
                 this.linesDisplay.textContent = lines;
             };
+            this.game.onJokerUpdate = (jokers) => {
+                this.updateJokerDisplay(jokers);
+            };
             this.game.onGameOver = (score) => {
                 this.handleGameOver(score);
             };
@@ -476,6 +486,49 @@ class TetrisApp {
             this.controls = new GameControls(this.game);
             this.game.start();
         }, 100);
+    }
+
+    /**
+     * Aktualisiert die Joker-Anzeige
+     */
+    updateJokerDisplay(jokerCount) {
+        if (!this.jokerList) return;
+
+        // Aktuelle Anzahl der angezeigten Joker
+        const currentJokers = this.jokerList.children.length;
+
+        // Joker hinzufügen wenn nötig
+        while (this.jokerList.children.length < jokerCount) {
+            const jokerItem = document.createElement('div');
+            jokerItem.className = 'joker-item';
+            jokerItem.textContent = '⭐';
+            jokerItem.addEventListener('click', () => this.useJoker(jokerItem));
+            this.jokerList.appendChild(jokerItem);
+        }
+
+        // Joker entfernen wenn nötig (ohne Animation, für Reset)
+        while (this.jokerList.children.length > jokerCount) {
+            this.jokerList.removeChild(this.jokerList.lastChild);
+        }
+    }
+
+    /**
+     * Verwendet einen Joker
+     */
+    useJoker(jokerElement) {
+        if (!this.game || !this.game.isRunning || this.game.isPaused) return;
+
+        // Animation starten
+        jokerElement.classList.add('using');
+
+        // Nach Animation entfernen und Joker im Spiel verwenden
+        setTimeout(() => {
+            const success = this.game.useJoker();
+            if (success) {
+                // Announcement zeigen
+                this.showAnnouncement('Joker!', 'single');
+            }
+        }, 150);
     }
 
     pauseGame() {

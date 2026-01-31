@@ -35,7 +35,7 @@ const TETROMINOES = {
     }
 };
 
-// Pentomino-Definitionen (8 neue Formen - werden ab Level 2 freigeschaltet)
+// Pentomino-Definitionen (5 neue Formen - werden ab Level 2 freigeschaltet)
 const PENTOMINOES = {
     Plus: {
         shape: [[0, 1, 0], [1, 1, 1], [0, 1, 0]],
@@ -56,18 +56,6 @@ const PENTOMINOES = {
     F: {
         shape: [[0, 1, 1], [1, 1, 0], [0, 1, 0]],
         color: '#ff1493'  // Deep Pink
-    },
-    Y: {
-        shape: [[0, 1], [1, 1], [0, 1], [0, 1]],
-        color: '#7b68ee'  // Violett
-    },
-    V: {
-        shape: [[1, 0, 0], [1, 0, 0], [1, 1, 1]],
-        color: '#20b2aa'  // Seegrün
-    },
-    X: {
-        shape: [[1, 0, 1], [0, 1, 0], [1, 0, 1]],
-        color: '#ff4500'  // Orange-Rot
     }
 };
 
@@ -108,6 +96,8 @@ class TetrisGame {
         this.score = 0;
         this.level = 1;
         this.lines = 0;
+        this.jokers = 0;
+        this.maxJokers = 10;
         this.isRunning = false;
         this.isPaused = false;
         this.isGameOver = false;
@@ -121,6 +111,7 @@ class TetrisGame {
         this.onScoreUpdate = null;
         this.onLevelUpdate = null;
         this.onLinesUpdate = null;
+        this.onJokerUpdate = null;
         this.onGameOver = null;
 
         // Canvas-Größe setzen
@@ -175,6 +166,7 @@ class TetrisGame {
         this.score = 0;
         this.level = 1;
         this.lines = 0;
+        this.jokers = 0;
         this.isRunning = true;
         this.isPaused = false;
         this.isGameOver = false;
@@ -424,6 +416,15 @@ class TetrisGame {
             this.score += points * this.level;
             this.lines += clearedRows.length;
 
+            // Joker verdienen bei 2+ Reihen gleichzeitig
+            if (clearedRows.length >= 2) {
+                const jokersToAdd = clearedRows.length;
+                this.jokers = Math.min(this.maxJokers, this.jokers + jokersToAdd);
+                if (this.onJokerUpdate) {
+                    this.onJokerUpdate(this.jokers);
+                }
+            }
+
             // Level-Up prüfen
             const newLevel = Math.floor(this.lines / 10) + 1;
             if (newLevel > this.level) {
@@ -542,6 +543,45 @@ class TetrisGame {
         if (this.onScoreUpdate) this.onScoreUpdate(this.score);
         if (this.onLevelUpdate) this.onLevelUpdate(this.level);
         if (this.onLinesUpdate) this.onLinesUpdate(this.lines);
+        if (this.onJokerUpdate) this.onJokerUpdate(this.jokers);
+    }
+
+    /**
+     * Joker verwenden - füllt eine Lücke in der untersten Reihe mit Lücken
+     * @returns {boolean} true wenn erfolgreich verwendet
+     */
+    useJoker() {
+        if (!this.isRunning || this.isPaused || this.isGameOver) return false;
+        if (this.jokers <= 0) return false;
+
+        // Finde die unterste Reihe mit einer Lücke
+        for (let row = this.rows - 1; row >= 0; row--) {
+            for (let col = 0; col < this.cols; col++) {
+                if (this.board[row][col] === null) {
+                    // Lücke gefunden - fülle sie mit einem speziellen Joker-Block
+                    this.board[row][col] = '#ffffff'; // Weißer Joker-Block
+                    this.jokers--;
+
+                    // UI aktualisieren
+                    if (this.onJokerUpdate) {
+                        this.onJokerUpdate(this.jokers);
+                    }
+
+                    // Sound abspielen
+                    soundManager.click();
+
+                    // Neu zeichnen
+                    this.draw();
+
+                    // Prüfen ob dadurch Zeilen komplett werden
+                    this.clearLines();
+
+                    return true;
+                }
+            }
+        }
+
+        return false; // Keine Lücke gefunden
     }
 
     /**
