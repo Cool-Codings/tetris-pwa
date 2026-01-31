@@ -8,7 +8,7 @@ class SoundManager {
         this.enabled = true;
         this.audioContext = null;
         this.initialized = false;
-        this.voiceEnabled = true;
+        this.voiceEnabled = false; // Deaktiviert - Qualität zu schlecht
         this.onAnnouncement = null; // Callback für Text-Einblendung
 
         // Amerikanisch klingende Sprüche für Zeilen-Clears - erweitert!
