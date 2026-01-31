@@ -3,6 +3,26 @@
  * Haupt-Spiellogik für Tetris
  */
 
+// Domino-Definitionen (2-Block Figuren)
+const DOMINOES = {
+    D: {
+        shape: [[1, 1]],
+        color: '#87ceeb'  // Light sky blue
+    }
+};
+
+// Tromino-Definitionen (3-Block Figuren)
+const TROMINOES = {
+    I3: {
+        shape: [[1, 1, 1]],
+        color: '#98fb98'  // Pale green
+    },
+    L3: {
+        shape: [[1, 0], [1, 1]],
+        color: '#dda0dd'  // Plum
+    }
+};
+
 // Tetromino-Definitionen (klassische 7 Formen)
 const TETROMINOES = {
     I: {
@@ -59,9 +79,13 @@ const PENTOMINOES = {
     }
 };
 
+// Dominos (2-Block, ab Level 1)
+const DOMINO_NAMES = Object.keys(DOMINOES);
+// Trominos (3-Block, ab Level 1)
+const TROMINO_NAMES = Object.keys(TROMINOES);
 // Klassische Tetrominoes (Level 1)
 const TETROMINO_NAMES = Object.keys(TETROMINOES);
-// Neue Pentominoes (werden ab Level 2 nacheinander freigeschaltet)
+// Neue Pentominoes (werden ab Level 2 freigeschaltet, max 3 pro Level)
 const PENTOMINO_NAMES = Object.keys(PENTOMINOES);
 
 // Punkte-System
@@ -97,7 +121,9 @@ class TetrisGame {
         this.level = 1;
         this.lines = 0;
         this.jokers = 0;
-        this.maxJokers = 10;
+        this.maxJokers = 12;
+        this.pentominoesThisLevel = 0;
+        this.maxPentominoesPerLevel = 3;
         this.isRunning = false;
         this.isPaused = false;
         this.isGameOver = false;
@@ -128,12 +154,12 @@ class TetrisGame {
         const maxWidth = container.clientWidth || 300;
 
         // Cell-Size basierend auf verfügbarem Platz berechnen
-        // Mehr Platz nutzen - weniger Abstand
-        const cellByHeight = Math.floor((maxHeight - 4) / this.rows);
-        const cellByWidth = Math.floor((maxWidth - 4) / this.cols);
+        // Maximiere Spielfläche - nutze fast den gesamten Platz
+        const cellByHeight = Math.floor((maxHeight - 8) / this.rows);
+        const cellByWidth = Math.floor((maxWidth - 80) / this.cols); // 80px für Joker-Panel
         this.cellSize = Math.min(cellByHeight, cellByWidth);
-        this.cellSize = Math.max(this.cellSize, 20); // Minimum 20px
-        this.cellSize = Math.min(this.cellSize, 50); // Maximum 50px
+        this.cellSize = Math.max(this.cellSize, 22); // Minimum 22px
+        this.cellSize = Math.min(this.cellSize, 55); // Maximum 55px (höher für Tablets)
 
         // Canvas-Größen setzen
         this.canvas.width = this.cols * this.cellSize;
@@ -143,7 +169,7 @@ class TetrisGame {
         this.particleSystem.resize(this.canvas.width, this.canvas.height);
 
         // Next-Piece Canvas (größer für Pentominoes - bis zu 4 Reihen, 3 Spalten)
-        const nextCellSize = Math.max(14, Math.floor(this.cellSize * 0.55));
+        const nextCellSize = Math.max(16, Math.floor(this.cellSize * 0.6));
         this.nextCanvas.width = 4 * nextCellSize;
         this.nextCanvas.height = 4 * nextCellSize;
 
@@ -167,6 +193,7 @@ class TetrisGame {
         this.level = 1;
         this.lines = 0;
         this.jokers = 0;
+        this.pentominoesThisLevel = 0;
         this.isRunning = true;
         this.isPaused = false;
         this.isGameOver = false;
@@ -189,23 +216,33 @@ class TetrisGame {
 
     /**
      * Gibt die verfügbaren Formen basierend auf dem Level zurück
+     * @param {boolean} includePentominoes - Ob Pentominoes einbezogen werden sollen
      */
-    getAvailableShapes() {
-        // Level 1: nur klassische Tetrominoes
-        // Ab Level 2: +1 Pentomino pro Level (bis alle 8 freigeschaltet sind)
-        const unlockedPentominoes = Math.min(this.level - 1, PENTOMINO_NAMES.length);
-
+    getAvailableShapes(includePentominoes = true) {
         const available = [];
+
+        // Dominoes (2-Block) - ab Level 1
+        DOMINO_NAMES.forEach(name => {
+            available.push({ name, data: DOMINOES[name], type: 'domino' });
+        });
+
+        // Trominoes (3-Block) - ab Level 1
+        TROMINO_NAMES.forEach(name => {
+            available.push({ name, data: TROMINOES[name], type: 'tromino' });
+        });
 
         // Alle klassischen Tetrominoes hinzufügen
         TETROMINO_NAMES.forEach(name => {
-            available.push({ name, data: TETROMINOES[name] });
+            available.push({ name, data: TETROMINOES[name], type: 'tetromino' });
         });
 
-        // Freigeschaltete Pentominoes hinzufügen
-        for (let i = 0; i < unlockedPentominoes; i++) {
-            const name = PENTOMINO_NAMES[i];
-            available.push({ name, data: PENTOMINOES[name] });
+        // Freigeschaltete Pentominoes hinzufügen (ab Level 2, max 3 pro Level)
+        if (includePentominoes && this.pentominoesThisLevel < this.maxPentominoesPerLevel) {
+            const unlockedPentominoes = Math.min(this.level - 1, PENTOMINO_NAMES.length);
+            for (let i = 0; i < unlockedPentominoes; i++) {
+                const name = PENTOMINO_NAMES[i];
+                available.push({ name, data: PENTOMINOES[name], type: 'pentomino' });
+            }
         }
 
         return available;
@@ -218,6 +255,11 @@ class TetrisGame {
         const available = this.getAvailableShapes();
         const selected = available[Math.floor(Math.random() * available.length)];
         const piece = selected.data;
+
+        // Zähle Pentomino-Verwendung
+        if (selected.type === 'pentomino') {
+            this.pentominoesThisLevel++;
+        }
 
         return {
             shape: piece.shape.map(row => [...row]),
@@ -431,6 +473,8 @@ class TetrisGame {
                 this.level = newLevel;
                 // Geschwindigkeit: 800ms bei Level 1, -100ms pro Level, min 100ms
                 this.dropInterval = Math.max(100, 800 - (this.level - 1) * 100);
+                // Pentomino-Zähler für neues Level zurücksetzen
+                this.pentominoesThisLevel = 0;
                 soundManager.levelUp();
 
                 // Konfetti bei Level-Up

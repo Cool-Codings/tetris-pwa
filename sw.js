@@ -3,7 +3,7 @@
  * Ermöglicht Offline-Funktionalität
  */
 
-const CACHE_NAME = 'tetris-pwa-v12';
+const CACHE_NAME = 'tetris-pwa-v13';
 
 // Dateien zum Cachen
 const ASSETS_TO_CACHE = [
