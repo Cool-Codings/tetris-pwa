@@ -137,12 +137,12 @@ class TetrisGame {
         const maxWidth = container.clientWidth || 300;
 
         // Cell-Size basierend auf verfügbarem Platz berechnen
-        // Größere Zellen erlauben für bessere Sichtbarkeit
-        const cellByHeight = Math.floor((maxHeight - 10) / this.rows);
-        const cellByWidth = Math.floor((maxWidth - 10) / this.cols);
+        // Mehr Platz nutzen - weniger Abstand
+        const cellByHeight = Math.floor((maxHeight - 4) / this.rows);
+        const cellByWidth = Math.floor((maxWidth - 4) / this.cols);
         this.cellSize = Math.min(cellByHeight, cellByWidth);
-        this.cellSize = Math.max(this.cellSize, 18); // Minimum 18px
-        this.cellSize = Math.min(this.cellSize, 45); // Maximum 45px
+        this.cellSize = Math.max(this.cellSize, 20); // Minimum 20px
+        this.cellSize = Math.min(this.cellSize, 50); // Maximum 50px
 
         // Canvas-Größen setzen
         this.canvas.width = this.cols * this.cellSize;
@@ -152,7 +152,7 @@ class TetrisGame {
         this.particleSystem.resize(this.canvas.width, this.canvas.height);
 
         // Next-Piece Canvas (größer für Pentominoes - bis zu 4 Reihen, 3 Spalten)
-        const nextCellSize = Math.max(12, Math.floor(this.cellSize * 0.5));
+        const nextCellSize = Math.max(14, Math.floor(this.cellSize * 0.55));
         this.nextCanvas.width = 4 * nextCellSize;
         this.nextCanvas.height = 4 * nextCellSize;
 
@@ -590,7 +590,7 @@ class TetrisGame {
     }
 
     /**
-     * Ghost-Piece (Vorschau wo Stein landet)
+     * Ghost-Piece (Vorschau wo Stein landet) - sehr subtil
      */
     drawGhostPiece() {
         if (!this.currentPiece) return;
@@ -600,51 +600,183 @@ class TetrisGame {
             ghostY++;
         }
 
-        const { shape, color, x } = this.currentPiece;
-        const ctx = this.ctx;
+        // Nicht zeichnen wenn Ghost direkt unter aktuellem Stein ist
+        if (ghostY === this.currentPiece.y) return;
 
-        ctx.globalAlpha = 0.3;
+        const { shape, x } = this.currentPiece;
+        const ctx = this.ctx;
+        const cellSize = this.cellSize;
+        const padding = 2;
+
+        // Sehr subtiles Ghost - nur Umriss
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+
         for (let row = 0; row < shape.length; row++) {
             for (let col = 0; col < shape[row].length; col++) {
                 if (shape[row][col]) {
-                    this.drawCell(ctx, x + col, ghostY + row, color);
+                    const px = (x + col) * cellSize + padding;
+                    const py = (ghostY + row) * cellSize + padding;
+                    const size = cellSize - padding * 2;
+
+                    ctx.strokeRect(px, py, size, size);
                 }
             }
         }
-        ctx.globalAlpha = 1;
+
+        ctx.setLineDash([]);
     }
 
     /**
-     * Einzelne Zelle zeichnen
+     * Hilfsfunktion: Farbe aufhellen
+     */
+    lightenColor(color, percent) {
+        const num = parseInt(color.replace('#', ''), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = Math.min(255, (num >> 16) + amt);
+        const G = Math.min(255, ((num >> 8) & 0x00FF) + amt);
+        const B = Math.min(255, (num & 0x0000FF) + amt);
+        return `rgb(${R}, ${G}, ${B})`;
+    }
+
+    /**
+     * Hilfsfunktion: Farbe abdunkeln
+     */
+    darkenColor(color, percent) {
+        const num = parseInt(color.replace('#', ''), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = Math.max(0, (num >> 16) - amt);
+        const G = Math.max(0, ((num >> 8) & 0x00FF) - amt);
+        const B = Math.max(0, (num & 0x0000FF) - amt);
+        return `rgb(${R}, ${G}, ${B})`;
+    }
+
+    /**
+     * Einzelne Zelle zeichnen - 3D Brick Classic Style
      */
     drawCell(ctx, x, y, color) {
         const cellSize = this.cellSize;
-        const padding = 2;
-        const radius = 4;
+        const padding = 1;
+        const bevelSize = Math.max(3, Math.floor(cellSize * 0.12));
+        const radius = Math.max(2, Math.floor(cellSize * 0.08));
 
         const px = x * cellSize + padding;
         const py = y * cellSize + padding;
         const size = cellSize - padding * 2;
 
-        // Schatten/Glow
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = color;
+        // Farben für 3D-Effekt
+        const baseColor = color;
+        const lightColor = this.lightenColor(color, 40);
+        const darkColor = this.darkenColor(color, 35);
+        const innerLightColor = this.lightenColor(color, 20);
 
-        // Abgerundetes Rechteck
-        ctx.fillStyle = color;
+        // Äußerer Schatten/Glow
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = color;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 2;
+
+        // Basis-Block (Hauptfarbe)
+        ctx.fillStyle = baseColor;
         ctx.beginPath();
         ctx.roundRect(px, py, size, size, radius);
         ctx.fill();
 
-        // Highlight (oben links)
         ctx.shadowBlur = 0;
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.shadowOffsetY = 0;
+
+        // Obere Kante (hell) - 3D Highlight
+        ctx.fillStyle = lightColor;
         ctx.beginPath();
-        ctx.roundRect(px + 2, py + 2, size - 4, size / 3, radius - 1);
+        ctx.moveTo(px + radius, py);
+        ctx.lineTo(px + size - radius, py);
+        ctx.quadraticCurveTo(px + size, py, px + size, py + radius);
+        ctx.lineTo(px + size - bevelSize, py + bevelSize + radius);
+        ctx.lineTo(px + bevelSize + radius, py + bevelSize);
+        ctx.quadraticCurveTo(px + bevelSize, py + bevelSize, px + bevelSize, py + bevelSize + radius);
+        ctx.lineTo(px + bevelSize, py + size - bevelSize - radius);
+        ctx.lineTo(px, py + size - radius);
+        ctx.quadraticCurveTo(px, py, px + radius, py);
         ctx.fill();
 
-        // Schatten zurücksetzen
-        ctx.shadowBlur = 0;
+        // Linke Kante (hell)
+        ctx.fillStyle = this.lightenColor(color, 25);
+        ctx.beginPath();
+        ctx.moveTo(px, py + radius);
+        ctx.quadraticCurveTo(px, py, px + radius, py);
+        ctx.lineTo(px + bevelSize + radius, py + bevelSize);
+        ctx.quadraticCurveTo(px + bevelSize, py + bevelSize, px + bevelSize, py + bevelSize + radius);
+        ctx.lineTo(px + bevelSize, py + size - bevelSize - radius);
+        ctx.lineTo(px, py + size - radius);
+        ctx.quadraticCurveTo(px, py + size, px + radius, py + size);
+        ctx.lineTo(px + radius, py + size);
+        ctx.lineTo(px, py + size - radius);
+        ctx.closePath();
+        ctx.fill();
+
+        // Untere Kante (dunkel) - 3D Schatten
+        ctx.fillStyle = darkColor;
+        ctx.beginPath();
+        ctx.moveTo(px + radius, py + size);
+        ctx.lineTo(px + size - radius, py + size);
+        ctx.quadraticCurveTo(px + size, py + size, px + size, py + size - radius);
+        ctx.lineTo(px + size, py + radius);
+        ctx.lineTo(px + size - bevelSize, py + bevelSize + radius);
+        ctx.lineTo(px + size - bevelSize, py + size - bevelSize - radius);
+        ctx.quadraticCurveTo(px + size - bevelSize, py + size - bevelSize, px + size - bevelSize - radius, py + size - bevelSize);
+        ctx.lineTo(px + bevelSize + radius, py + size - bevelSize);
+        ctx.quadraticCurveTo(px + bevelSize, py + size - bevelSize, px + bevelSize, py + size - bevelSize - radius);
+        ctx.lineTo(px, py + size - radius);
+        ctx.quadraticCurveTo(px, py + size, px + radius, py + size);
+        ctx.fill();
+
+        // Rechte Kante (dunkel)
+        ctx.fillStyle = this.darkenColor(color, 25);
+        ctx.beginPath();
+        ctx.moveTo(px + size, py + radius);
+        ctx.quadraticCurveTo(px + size, py, px + size - radius, py);
+        ctx.lineTo(px + size - bevelSize - radius, py + bevelSize);
+        ctx.quadraticCurveTo(px + size - bevelSize, py + bevelSize, px + size - bevelSize, py + bevelSize + radius);
+        ctx.lineTo(px + size - bevelSize, py + size - bevelSize - radius);
+        ctx.lineTo(px + size, py + size - radius);
+        ctx.closePath();
+        ctx.fill();
+
+        // Innerer Bereich (leicht heller für 3D-Tiefe)
+        const innerPadding = bevelSize;
+        const innerSize = size - innerPadding * 2;
+        const innerRadius = Math.max(1, radius - 1);
+
+        // Gradient für inneren Bereich
+        const gradient = ctx.createLinearGradient(
+            px + innerPadding,
+            py + innerPadding,
+            px + innerPadding + innerSize,
+            py + innerPadding + innerSize
+        );
+        gradient.addColorStop(0, innerLightColor);
+        gradient.addColorStop(0.5, baseColor);
+        gradient.addColorStop(1, this.darkenColor(color, 10));
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.roundRect(px + innerPadding, py + innerPadding, innerSize, innerSize, innerRadius);
+        ctx.fill();
+
+        // Kleiner Glanzpunkt oben links
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.beginPath();
+        ctx.ellipse(
+            px + bevelSize + 4,
+            py + bevelSize + 4,
+            Math.max(2, size * 0.08),
+            Math.max(2, size * 0.06),
+            -Math.PI / 4,
+            0,
+            Math.PI * 2
+        );
+        ctx.fill();
     }
 
     /**
@@ -679,20 +811,58 @@ class TetrisGame {
     }
 
     /**
-     * Zelle für Next-Piece zeichnen (mit eigener Größe)
+     * Zelle für Next-Piece zeichnen - 3D Style
      */
     drawNextCell(ctx, x, y, size, color) {
         const padding = 1;
-        const radius = 3;
+        const bevelSize = Math.max(2, Math.floor(size * 0.15));
+        const radius = 2;
 
-        ctx.shadowBlur = 5;
+        const px = x + padding;
+        const py = y + padding;
+        const sz = size - padding * 2;
+
+        const lightColor = this.lightenColor(color, 35);
+        const darkColor = this.darkenColor(color, 30);
+
+        // Schatten
+        ctx.shadowBlur = 3;
         ctx.shadowColor = color;
 
+        // Basis
         ctx.fillStyle = color;
         ctx.beginPath();
-        ctx.roundRect(x + padding, y + padding, size - padding * 2, size - padding * 2, radius);
+        ctx.roundRect(px, py, sz, sz, radius);
         ctx.fill();
 
         ctx.shadowBlur = 0;
+
+        // Obere/linke Kante hell
+        ctx.fillStyle = lightColor;
+        ctx.beginPath();
+        ctx.moveTo(px, py + sz);
+        ctx.lineTo(px, py);
+        ctx.lineTo(px + sz, py);
+        ctx.lineTo(px + sz - bevelSize, py + bevelSize);
+        ctx.lineTo(px + bevelSize, py + bevelSize);
+        ctx.lineTo(px + bevelSize, py + sz - bevelSize);
+        ctx.closePath();
+        ctx.fill();
+
+        // Untere/rechte Kante dunkel
+        ctx.fillStyle = darkColor;
+        ctx.beginPath();
+        ctx.moveTo(px + sz, py);
+        ctx.lineTo(px + sz, py + sz);
+        ctx.lineTo(px, py + sz);
+        ctx.lineTo(px + bevelSize, py + sz - bevelSize);
+        ctx.lineTo(px + sz - bevelSize, py + sz - bevelSize);
+        ctx.lineTo(px + sz - bevelSize, py + bevelSize);
+        ctx.closePath();
+        ctx.fill();
+
+        // Innerer Bereich
+        ctx.fillStyle = color;
+        ctx.fillRect(px + bevelSize, py + bevelSize, sz - bevelSize * 2, sz - bevelSize * 2);
     }
 }
