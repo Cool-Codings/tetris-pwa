@@ -9,13 +9,38 @@ class SoundManager {
         this.audioContext = null;
         this.initialized = false;
         this.voiceEnabled = true;
+        this.onAnnouncement = null; // Callback für Text-Einblendung
 
-        // Amerikanisch klingende Sprüche für Zeilen-Clears
-        this.singleLinePhrases = ['Nice!', 'Good!', 'Yeah!', 'Cool!', 'Sweet!'];
-        this.doubleLinePhrases = ['Two rows!', 'Double!', 'Great!', 'Awesome!', 'Nice combo!'];
-        this.tripleLinePhrases = ['Triple!', 'Fantastic!', 'Amazing!', 'Incredible!', 'Three rows!'];
-        this.tetrisPhrases = ['TETRIS!', 'Perfect!', 'Excellent!', 'Outstanding!', 'Legendary!'];
-        this.levelUpPhrases = ['Level up!', 'Next level!', 'Keep going!', 'Faster now!'];
+        // Amerikanisch klingende Sprüche für Zeilen-Clears - erweitert!
+        this.singleLinePhrases = [
+            'Nice!', 'Good!', 'Yeah!', 'Cool!', 'Sweet!',
+            'Solid hit!', 'One down!', 'Clean drop!', 'Stack slayer!', 'Line buster!',
+            'Quick clear!', 'Nailed it!', 'Fresh wipe!', 'One gone!', 'Smooth strike!'
+        ];
+
+        this.doubleLinePhrases = [
+            'Two rows!', 'Double!', 'Great!', 'Awesome!', 'Nice combo!',
+            'Double trouble!', 'Two-fer!', 'Doubled up!', 'Twin kill!', 'Pair popped!',
+            'Double decker down!', 'Two smashed!', 'Duo delete!', 'Twice the nice!', 'Double dynamite!'
+        ];
+
+        this.tripleLinePhrases = [
+            'Triple!', 'Fantastic!', 'Amazing!', 'Incredible!', 'Three rows!',
+            'Triple threat!', 'Three peat!', 'Trio torched!', 'Triple takeout!', 'Three gone wild!',
+            'Tri-fecta!', 'Blast of three!', 'Triple troublemaker!', 'Three-line feast!', 'Triumph times three!'
+        ];
+
+        this.tetrisPhrases = [
+            'TETRIS!', 'Perfect!', 'Excellent!', 'Legendary!',
+            'Full TETRIS!', 'Quad kill!', 'Four-alarm fire!', 'Tetris thunder!', 'Perfect purge!',
+            'Four lines fried!', 'Mega wipeout!', 'Tetris takeover!', 'Quad crusher!', 'Epic clearout!'
+        ];
+
+        this.levelUpPhrases = [
+            'Level up!', 'Next level!', 'Keep going!', 'Faster now!',
+            'Level unlocked!', 'Rising up!', 'New heights!', 'Level legend!', 'Climb mode!',
+            'Gear shift up!', 'Boss level now!', 'Elevate!', 'Next gear!', 'Power surge!'
+        ];
     }
 
     /**
@@ -29,7 +54,7 @@ class SoundManager {
             this.initialized = true;
             console.log('Audio initialisiert');
 
-            // Lade englische Stimme wenn verfügbar
+            // Lade männliche englische Stimme wenn verfügbar
             if ('speechSynthesis' in window) {
                 speechSynthesis.onvoiceschanged = () => {
                     this.loadVoice();
@@ -43,14 +68,44 @@ class SoundManager {
     }
 
     /**
-     * Lädt eine englische Stimme
+     * Lädt eine tiefe männliche englische Stimme
      */
     loadVoice() {
         const voices = speechSynthesis.getVoices();
-        // Bevorzuge US-englische Stimmen
-        this.voice = voices.find(v => v.lang === 'en-US') ||
-            voices.find(v => v.lang.startsWith('en')) ||
-            voices[0];
+
+        // Suche nach männlichen US-englischen Stimmen (typische Namen)
+        const maleVoiceNames = ['Google US English Male', 'Microsoft David', 'Alex', 'Daniel', 'Fred', 'Junior', 'Ralph'];
+
+        // Versuche zuerst eine bekannte männliche Stimme zu finden
+        this.voice = voices.find(v =>
+            maleVoiceNames.some(name => v.name.includes(name)) && v.lang.startsWith('en')
+        );
+
+        // Falls nicht gefunden, suche nach einer Stimme mit "male" im Namen
+        if (!this.voice) {
+            this.voice = voices.find(v =>
+                v.name.toLowerCase().includes('male') && v.lang.startsWith('en')
+            );
+        }
+
+        // Fallback auf US-englische Stimme
+        if (!this.voice) {
+            this.voice = voices.find(v => v.lang === 'en-US');
+        }
+
+        // Fallback auf englische Stimme
+        if (!this.voice) {
+            this.voice = voices.find(v => v.lang.startsWith('en'));
+        }
+
+        // Ultimativer Fallback
+        if (!this.voice && voices.length > 0) {
+            this.voice = voices[0];
+        }
+
+        if (this.voice) {
+            console.log('Stimme geladen:', this.voice.name);
+        }
     }
 
     /**
@@ -108,7 +163,7 @@ class SoundManager {
     }
 
     /**
-     * Spricht einen Text mit amerikanischer Stimme
+     * Spricht einen Text mit tiefer männlicher amerikanischer Stimme
      */
     speak(text) {
         if (!this.enabled || !this.voiceEnabled || !('speechSynthesis' in window)) return;
@@ -118,11 +173,23 @@ class SoundManager {
 
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.voice = this.voice;
-        utterance.rate = 1.1;  // Etwas schneller
-        utterance.pitch = 1.0;
-        utterance.volume = 0.8;
+        utterance.rate = 1.0;   // Normal speed für mehr Emotion
+        utterance.pitch = 0.8;  // Tiefere Stimme
+        utterance.volume = 1.0; // Volle Lautstärke
 
         speechSynthesis.speak(utterance);
+    }
+
+    /**
+     * Zeigt Announcement auf dem Bildschirm und spricht es
+     */
+    announce(text, type = 'normal') {
+        // Callback für visuelle Einblendung
+        if (this.onAnnouncement) {
+            this.onAnnouncement(text, type);
+        }
+        // Sprachausgabe
+        this.speak(text);
     }
 
     /**
@@ -247,12 +314,10 @@ class SoundManager {
     }
 
     /**
-     * Sound beim Löschen einer Zeile mit Sprachausgabe
+     * Sound beim Löschen einer Zeile mit Sprachausgabe und Einblendung
      */
     clearLine(linesCleared = 1) {
         if (!this.enabled || !this.audioContext) return;
-
-        const now = this.audioContext.currentTime;
 
         // Schimmernder Sweep-Sound
         for (let i = 0; i < linesCleared; i++) {
@@ -263,23 +328,31 @@ class SoundManager {
             }, i * 80);
         }
 
-        // Sprachausgabe basierend auf Anzahl der Zeilen
+        // Sprachausgabe und Einblendung basierend auf Anzahl der Zeilen
         setTimeout(() => {
+            let phrase, type;
             switch (linesCleared) {
                 case 1:
-                    this.speak(this.randomPhrase(this.singleLinePhrases));
+                    phrase = this.randomPhrase(this.singleLinePhrases);
+                    type = 'single';
                     break;
                 case 2:
-                    this.speak(this.randomPhrase(this.doubleLinePhrases));
+                    phrase = this.randomPhrase(this.doubleLinePhrases);
+                    type = 'double';
                     break;
                 case 3:
-                    this.speak(this.randomPhrase(this.tripleLinePhrases));
+                    phrase = this.randomPhrase(this.tripleLinePhrases);
+                    type = 'triple';
                     break;
                 case 4:
                     // Tetris - extra episch!
                     this.playTetrisSound();
-                    this.speak(this.randomPhrase(this.tetrisPhrases));
+                    phrase = this.randomPhrase(this.tetrisPhrases);
+                    type = 'tetris';
                     break;
+            }
+            if (phrase) {
+                this.announce(phrase, type);
             }
         }, linesCleared * 80 + 100);
     }
@@ -288,8 +361,6 @@ class SoundManager {
      * Epischer Tetris-Sound
      */
     playTetrisSound() {
-        const now = this.audioContext.currentTime;
-
         // Aufsteigender Akkord
         const notes = [523, 659, 784, 1047]; // C, E, G, C
         notes.forEach((freq, i) => {
@@ -310,7 +381,7 @@ class SoundManager {
     }
 
     /**
-     * Sound bei Level-Up mit Sprachausgabe
+     * Sound bei Level-Up mit Sprachausgabe und Einblendung
      */
     levelUp() {
         if (!this.enabled || !this.audioContext) return;
@@ -329,9 +400,10 @@ class SoundManager {
             this.playChord([784, 988, 1175], 0.4, 0.25);
         }, 400);
 
-        // Sprachausgabe
+        // Sprachausgabe und Einblendung
         setTimeout(() => {
-            this.speak(this.randomPhrase(this.levelUpPhrases));
+            const phrase = this.randomPhrase(this.levelUpPhrases);
+            this.announce(phrase, 'levelup');
         }, 500);
     }
 
@@ -357,7 +429,7 @@ class SoundManager {
 
         // Sprachausgabe
         setTimeout(() => {
-            this.speak('Game over!');
+            this.announce('Game over!', 'gameover');
         }, 1200);
     }
 

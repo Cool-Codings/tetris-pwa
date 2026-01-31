@@ -1075,3 +1075,231 @@ body {
         font-size: 0.65rem;
     }
 }
+
+/* ===========================================
+   ANNOUNCEMENT OVERLAY
+   =========================================== */
+
+.announcement-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.announcement-overlay.visible {
+    opacity: 1;
+}
+
+.announcement-overlay.hidden {
+    display: none;
+}
+
+.announcement-text {
+    font-size: clamp(1.5rem, 6vw, 2.5rem);
+    font-weight: 900;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 10px 25px;
+    border-radius: 12px;
+    white-space: nowrap;
+    animation: announcementPop 1s ease forwards;
+    text-shadow:
+        0 0 10px currentColor,
+        0 0 20px currentColor,
+        0 0 40px currentColor,
+        2px 2px 0 rgba(0, 0, 0, 0.5);
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.6));
+    border: 2px solid currentColor;
+    box-shadow:
+        0 0 30px currentColor,
+        inset 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+/* Type-specific colors */
+.announcement-overlay.single .announcement-text {
+    color: #6bcb77;
+}
+
+.announcement-overlay.double .announcement-text {
+    color: #00f5ff;
+}
+
+.announcement-overlay.triple .announcement-text {
+    color: #ff9f43;
+}
+
+.announcement-overlay.tetris .announcement-text {
+    color: #ffd93d;
+    font-size: clamp(2rem, 8vw, 3.5rem);
+    animation: tetrisPop 1s ease forwards;
+}
+
+.announcement-overlay.levelup .announcement-text {
+    color: #ff69b4;
+}
+
+.announcement-overlay.gameover .announcement-text {
+    color: #ff6b6b;
+}
+
+@keyframes announcementPop {
+    0% {
+        transform: scale(0.3) rotate(-5deg);
+        opacity: 0;
+    }
+    20% {
+        transform: scale(1.2) rotate(2deg);
+        opacity: 1;
+    }
+    40% {
+        transform: scale(0.95) rotate(-1deg);
+    }
+    60% {
+        transform: scale(1.05) rotate(0deg);
+        opacity: 1;
+    }
+    80% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 0;
+    }
+}
+
+@keyframes tetrisPop {
+    0% {
+        transform: scale(0.2) rotate(-10deg);
+        opacity: 0;
+    }
+    15% {
+        transform: scale(1.4) rotate(5deg);
+        opacity: 1;
+    }
+    30% {
+        transform: scale(0.9) rotate(-3deg);
+    }
+    45% {
+        transform: scale(1.15) rotate(2deg);
+    }
+    60% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+    80% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.1) rotate(0deg);
+        opacity: 0;
+    }
+}
+
+/* Sparks effect */
+.announcement-sparks {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.announcement-overlay.visible .announcement-sparks::before,
+.announcement-overlay.visible .announcement-sparks::after {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ffd93d;
+    box-shadow:
+        0 0 10px #ffd93d,
+        0 0 20px #ffd93d,
+        0 0 30px #ff9f43;
+    animation: sparkle 1s ease forwards;
+}
+
+.announcement-overlay.visible .announcement-sparks::before {
+    left: 10%;
+    top: 20%;
+    animation-delay: 0.1s;
+}
+
+.announcement-overlay.visible .announcement-sparks::after {
+    right: 10%;
+    bottom: 20%;
+    animation-delay: 0.2s;
+}
+
+.announcement-overlay.visible .announcement-sparks:first-child::before {
+    left: 15%;
+    top: 60%;
+    animation-delay: 0.15s;
+}
+
+.announcement-overlay.visible .announcement-sparks:first-child::after {
+    right: 15%;
+    top: 30%;
+    animation-delay: 0.25s;
+}
+
+.announcement-overlay.visible .announcement-sparks:last-child::before {
+    left: 5%;
+    top: 40%;
+    animation-delay: 0.05s;
+}
+
+.announcement-overlay.visible .announcement-sparks:last-child::after {
+    right: 5%;
+    bottom: 40%;
+    animation-delay: 0.3s;
+}
+
+@keyframes sparkle {
+    0% {
+        transform: scale(0) translate(0, 0);
+        opacity: 0;
+    }
+    20% {
+        transform: scale(1.5) translate(-10px, -10px);
+        opacity: 1;
+    }
+    40% {
+        transform: scale(1) translate(5px, -20px);
+        opacity: 0.8;
+    }
+    60% {
+        transform: scale(0.8) translate(-5px, -30px);
+        opacity: 0.5;
+    }
+    80% {
+        transform: scale(0.5) translate(10px, -40px);
+        opacity: 0.2;
+    }
+    100% {
+        transform: scale(0) translate(0, -50px);
+        opacity: 0;
+    }
+}
+
+/* Extra sparkle particles for Tetris */
+.announcement-overlay.tetris .announcement-sparks::before,
+.announcement-overlay.tetris .announcement-sparks::after {
+    width: 10px;
+    height: 10px;
+    background: linear-gradient(135deg, #ffd93d, #ff6b6b);
+    box-shadow:
+        0 0 15px #ffd93d,
+        0 0 30px #ff9f43,
+        0 0 45px #ff6b6b;
+}

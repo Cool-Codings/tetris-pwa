@@ -225,6 +225,11 @@ class TetrisApp {
         this.startLeaderboardList = document.getElementById('start-leaderboard-list');
         this.gameoverLeaderboardList = document.getElementById('gameover-leaderboard-list');
 
+        // Announcement-Elemente
+        this.announcementOverlay = document.getElementById('announcement-overlay');
+        this.announcementText = document.getElementById('announcement-text');
+        this.announcementTimeout = null;
+
         // Spiel initialisieren
         this.game = null;
         this.controls = null;
@@ -244,6 +249,11 @@ class TetrisApp {
         soundManager.enabled = soundEnabled;
         this.updateSoundButton();
 
+        // Announcement-Callback für SoundManager einrichten
+        soundManager.onAnnouncement = (text, type) => {
+            this.showAnnouncement(text, type);
+        };
+
         // Typewriter-Effekt für Titel starten
         const titleNameElement = document.getElementById('title-name');
         if (titleNameElement) {
@@ -258,6 +268,40 @@ class TetrisApp {
 
         // Verhindere Zoom auf Mobile
         document.addEventListener('gesturestart', (e) => e.preventDefault());
+    }
+
+    /**
+     * Zeigt eine flashige Announcement-Einblendung
+     */
+    showAnnouncement(text, type = 'normal') {
+        if (!this.announcementOverlay || !this.announcementText) return;
+
+        // Vorherige Animation abbrechen
+        if (this.announcementTimeout) {
+            clearTimeout(this.announcementTimeout);
+        }
+
+        // Alle Type-Klassen entfernen
+        this.announcementOverlay.classList.remove(
+            'single', 'double', 'triple', 'tetris', 'levelup', 'gameover', 'hidden', 'visible'
+        );
+
+        // Text und Type setzen
+        this.announcementText.textContent = text;
+        this.announcementOverlay.classList.add(type);
+
+        // Einblenden
+        this.announcementOverlay.classList.add('visible');
+
+        // Nach 1 Sekunde ausblenden
+        this.announcementTimeout = setTimeout(() => {
+            this.announcementOverlay.classList.remove('visible');
+
+            // Nach Fade-out verstecken
+            setTimeout(() => {
+                this.announcementOverlay.classList.add('hidden');
+            }, 200);
+        }, 1000);
     }
 
     setupEventListeners() {

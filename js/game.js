@@ -590,7 +590,7 @@ class TetrisGame {
     }
 
     /**
-     * Ghost-Piece (Vorschau wo Stein landet) - sehr subtil
+     * Ghost-Piece (Vorschau wo Stein landet) - sichtbar aber dezent
      */
     drawGhostPiece() {
         if (!this.currentPiece) return;
@@ -603,15 +603,13 @@ class TetrisGame {
         // Nicht zeichnen wenn Ghost direkt unter aktuellem Stein ist
         if (ghostY === this.currentPiece.y) return;
 
-        const { shape, x } = this.currentPiece;
+        const { shape, color, x } = this.currentPiece;
         const ctx = this.ctx;
         const cellSize = this.cellSize;
         const padding = 2;
 
-        // Sehr subtiles Ghost - nur Umriss
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([3, 3]);
+        // Ghost mit 30% Opacity - gefüllt mit Umriss
+        ctx.globalAlpha = 0.3;
 
         for (let row = 0; row < shape.length; row++) {
             for (let col = 0; col < shape[row].length; col++) {
@@ -620,12 +618,19 @@ class TetrisGame {
                     const py = (ghostY + row) * cellSize + padding;
                     const size = cellSize - padding * 2;
 
+                    // Gefülltes Rechteck
+                    ctx.fillStyle = color;
+                    ctx.fillRect(px, py, size, size);
+
+                    // Umriss
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                    ctx.lineWidth = 1;
                     ctx.strokeRect(px, py, size, size);
                 }
             }
         }
 
-        ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
     }
 
     /**
